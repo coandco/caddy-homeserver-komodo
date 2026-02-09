@@ -11,7 +11,7 @@ Installation steps:
 3. Also on your main domain, set up two CNAME records to point let's encrypt challenges at your
    cloudflare domain: `_acme-challenge.local` and `_acme_challenge.main` should CNAME to
    `local.cfdomain.com` and `main.cfdomain.com` respectively.
-4. Run `docker-compose -f docker-compose.komodo.yml up -d`.  This will bring Komodo 
+4. Run `docker compose -f docker-compose.komodo.yml up -d`.  This will bring Komodo 
    up on port 9120.  Next, visit `http://<ip_of_machine_docker_is_running_on>:9120` in your browser.
 5. Set the initial admin password for Komodo, then click `Stacks->New Stack` and name the new stack
    "caddy".  Select your server from the "Select Server" box (should be the only one available) 
