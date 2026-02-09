@@ -13,7 +13,6 @@ services:
     environment:
       KOMODO_DATABASE_ADDRESS: "ferretdb"
       KOMODO_PASSKEY: "Grid-Napping-Rockslide7"
-      KOMODO_HOST: "https://komodo.${LOCAL_DOMAIN}"
       KOMODO_FIRST_SERVER: "https://periphery:8120"
       KOMODO_LOCAL_AUTH: "true"
       KOMODO_DISABLE_CONFIRM_DIALOG: "false"
@@ -80,3 +79,4 @@ services:
 networks:
   caddy:
     name: homeserver
+    external: true

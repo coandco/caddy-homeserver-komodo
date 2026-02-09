@@ -11,13 +11,14 @@ Installation steps:
 3. Also on your main domain, set up two CNAME records to point let's encrypt challenges at your
    cloudflare domain: `_acme-challenge.local` and `_acme_challenge.main` should CNAME to
    `local.cfdomain.com` and `main.cfdomain.com` respectively.
-4. Run `docker compose -f docker-compose.komodo.yml up -d`.  This will bring Komodo 
+4. Run `docker network create homeserver` to create the network the various compose files will use.
+5. Run `docker compose -f docker-compose.komodo.yml up -d`.  This will bring Komodo 
    up on port 9120.  Next, visit `http://<ip_of_machine_docker_is_running_on>:9120` in your browser.
-5. Log into your Komodo instance with admin/changeme, then change the admin password.
-6. Click `Stacks->New Stack` and name the new stack "caddy".  Select your server from the 
+6. Log into your Komodo instance with admin/changeme, then change the admin password.
+7. Click `Stacks->New Stack` and name the new stack "caddy".  Select your server from the 
    "Select Server" box (should be the only one available) and choose "UI Defined" under "Choose Mode".  
    Paste the contents of `docker-compose.caddy.yml` into the `Compose File` section.
-7. Scroll down to the "Environment" section and fill in the following variables (replacing the values
+8. Scroll down to the "Environment" section and fill in the following variables (replacing the values
    with your own information):
    ```
    EMAIL=your_email
@@ -26,8 +27,8 @@ Installation steps:
    CLOUDFLARE_DOMAIN=cloudflare_domain
    CLOUDFLARE_API_KEY=cloudflare_api_key
    ```
-8. Hit the "Save" button in the lower-left corner, confirm in the dialog, then scroll to the top and hit
+9. Hit the "Save" button in the lower-left corner, confirm in the dialog, then scroll to the top and hit
    the "Deploy" button above the config to start Caddy.
-9. See if you can access Komodo through Caddy via https://komodo.$LOCAL_DOMAIN (from the env
+10. See if you can access Komodo through Caddy via https://komodo.$LOCAL_DOMAIN (from the env
    vars you filled out in step 6).
-10. If it works, try adding another stack using the template found in `docker-compose.example-service.yml`.
+11. If it works, try adding another stack using the template found in `docker-compose.example-service.yml`.
