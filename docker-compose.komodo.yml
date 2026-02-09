@@ -1,0 +1,80 @@
+services:
+  core:
+    image: ghcr.io/moghtech/komodo-core:latest
+    restart: unless-stopped
+    depends_on:
+      - ferretdb
+    logging:
+      driver: local
+    ports:
+      - "9120:9120"
+    networks:
+      - caddy
+    environment:
+      KOMODO_DATABASE_ADDRESS: "ferretdb"
+      KOMODO_PASSKEY: "Grid-Napping-Rockslide7"
+      KOMODO_HOST: "https://komodo.${LOCAL_DOMAIN}"
+      KOMODO_FIRST_SERVER: "https://periphery:8120"
+      KOMODO_LOCAL_AUTH: "true"
+      KOMODO_DISABLE_CONFIRM_DIALOG: "false"
+      KOMODO_WEBHOOK_SECRET: "Museum8-Afar-Latticed"
+      KOMODO_JWT_SECRET: "Landmass8-Sandpaper-Snowiness"
+      KOMODO_OIDC_ENABLED: "false"
+      KOMODO_GITHUB_OAUTH_ENABLED: "false"
+      KOMODO_GOOGLE_OAUTH_ENABLED: "false"
+      TZ: "America/Los_Angeles"
+    volumes:
+      - /volume1/docker/komodo/repo-cache:/repo-cache
+      - /volume1/docker/komodo/syncs:/syncs
+      ## Optionally mount a custom core.config.toml
+      # - /path/to/core.config.toml:/config/config.toml
+    labels:
+      caddy: "komodo.{env.LOCAL_DOMAIN}"
+      caddy.import: local_only
+      caddy.reverse_proxy: "{{ upstreams 9120 }}"
+      komodo.skip: "" # Prevent Komodo from stopping with StopAllContainers
+
+  periphery:
+    image: ghcr.io/moghtech/komodo-periphery:latest
+    restart: unless-stopped
+    logging:
+      driver: local
+    environment:
+      PERIPHERY_ROOT_DIRECTORY: "/volume1/docker/komodo/periphery"
+      PERIPHERY_PASSKEYS: "Grid-Napping-Rockslide7"
+      PERIPHERY_DISABLE_TERMINALS: "false"
+      PERIPHERY_SSL_ENABLED: "true"
+      PERIPHERY_INCLUDE_DISK_MOUNTS: "/etc/hostname"
+    networks:
+      - caddy
+    volumes:
+      ## Mount external docker socket
+      - /var/run/docker.sock:/var/run/docker.sock
+      ## Allow Periphery to see processes outside of container
+      - /proc:/proc
+      ## Specify the Periphery agent root directory.
+      ## Must be the same inside and outside the container,
+      ## or docker will get confused. See https://github.com/moghtech/komodo/discussions/180.
+      ## Default: /etc/komodo.
+      - /volume1/docker/komodo/periphery:/volume1/docker/komodo/periphery
+    labels:
+      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
+
+  ferretdb:
+    image: ghcr.io/ferretdb/ferretdb:1
+    labels:
+      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
+    restart: unless-stopped
+    logging:
+      driver: local
+    networks:
+      - caddy
+    volumes:
+      - /volume1/docker/komodo/db:/state
+    environment:
+      FERRETDB_HANDLER: sqlite
+      TZ: "America/Los_Angeles"
+
+networks:
+  caddy:
+    name: homeserver

@@ -1,0 +1,145 @@
+services:
+  caddy:
+    container_name: caddy
+    restart: unless-stopped
+    # This image has a bunch of plugins, see https://github.com/homeall/caddy-reverse-proxy-cloudflare
+    image: homeall/caddy-reverse-proxy-cloudflare:latest
+    command: ["caddy", "docker-proxy"]
+    # Fill these in with your details so 
+    environment:
+      # Let's Encrypt uses your email as part of certificate registration
+      EMAIL: "${EMAIL}"
+      # If you registered *.main.example.com, this should be main.example.com
+      MAIN_DOMAIN: "${MAIN_DOMAIN}"
+      # If you registered *.local.example.com, this should be local.example.com
+      LOCAL_DOMAIN: "${LOCAL_DOMAIN}"
+      # This is the Cloudflare backing domain you'll use for getting Let's Encrypt certs
+      # If you registered backing-cf-domain.com, this should be backing-cf-domain.com
+      CLOUDFLARE_DOMAIN: "${CLOUDFLARE_DOMAIN}"
+      # This needs to be your Cloudflare API key, gotten from 
+      # https://dash.cloudflare.com/profile/api-tokens with the Zone.DNS permission
+      CLOUDFLARE_API_KEY: "${CLOUDFLARE_API_KEY}"
+      CADDY_INGRESS_NETWORKS: homeserver
+    volumes:
+      # Caddy has to be able to read Docker labels do to its thing
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Caddy wants separate data and config folders mounted to these locations
+      - /volume1/docker/caddy/data:/data/caddy
+      - /volume1/docker/caddy/config:/config/caddy
+    networks:
+      - caddy
+    # Port 80/443 need to be pointed at Caddy for HTTP/HTTPS to work
+    ports:
+      - 80:80
+      - 443:443
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+
+  # We're using a separate container for config, as that way we can edit our config without
+  # restarting the main caddy container and interrupting all existing connections.  By using
+  # a separate container, edits below will trigger a hot reload and update the config while
+  # keeping existing connections intact.
+  caddy-config:
+    restart: unless-stopped
+    # This image is doing nothing -- it's literally just a place for docker labels to exist
+    image: alpine
+    command: ["/bin/sleep", "infinity"]
+    networks:
+      - caddy
+    labels:
+      #### Global Settings ####
+      # This translates to the following Caddyfile block:
+      # {
+      #   email {env.EMAIL}
+      #   auto_https prefer_wildcard
+      # }
+      caddy_0.email: "{env.EMAIL}"
+      # This bit is important.  It allows us to define a single wildcard domain
+      # (see caddy_10/caddy_11 blocks), get a certificate that's valid for all of them,
+      # and automatically use it when we define specific domains later.
+      caddy_0.auto_https: prefer_wildcard
+
+      #### Snippets ####
+      # This allows us to define little reusable chunks of Caddyfile code that we can
+      # import later to reduce how much boilerplate we need.
+
+      # Get wildcard certificate
+      # This translates to the following Caddyfile block:
+      # (wildcard) {
+      #   tls {
+      #     dns cloudflare {env.CLOUDFLARE_API_KEY}
+      #     dns_challenge_override_domain "{args[0]}.{env.CLOUDFLARE_DOMAIN}."
+      #     resolvers 1.1.1.1 1.0.0.1
+      #   }
+      #   handle {
+      #     abort
+      #   }
+      # }
+      caddy_1: (wildcard)
+      caddy_1.tls.dns: "cloudflare {env.CLOUDFLARE_API_KEY}"
+      caddy_1.tls.dns_challenge_override_domain: "{args[0]}.{env.CLOUDFLARE_DOMAIN}."
+      caddy_1.tls.resolvers: 1.1.1.1 1.0.0.1
+      caddy_1.handle.abort: ""
+
+      # Skip TLS verify for backend with self-signed HTTPS
+      # This translates to the following Caddyfile block:
+      # (https) {
+      #   transport http {
+      #     tls
+      #     tls_insecure_skip_verify
+      #   }
+      # }
+      # 
+      caddy_2: (https)
+      caddy_2.transport: http
+      caddy_2.transport.tls: ""
+      caddy_2.transport.tls_insecure_skip_verify: ""
+
+      # Deny access from public IPs
+      # This translates to the following Caddyfile block:
+      # (local_only) {
+      #   @public_ips not client_ip private_ranges
+      #   abort @public_ips
+      # }
+      caddy_3: (local_only)
+      "caddy_3.@public_ips": "not client_ip private_ranges"
+      caddy_3.abort: "@public_ips"
+
+      # Wildcard definitions
+      # Here you can see the value of the snippets above -- we can just `import wildcard`
+      # multiple times and not have to repeat ourselves.  This particular chunk translates to:
+      #
+      # *.{env.MAIN_DOMAIN} {
+      #   import wildcard main
+      # }
+      #
+      # Which in turn expands to:
+      #
+      # *.{env.MAIN_DOMAIN} {
+      #   tls {
+      #     dns cloudflare {env.CLOUDFLARE_API_KEY}
+      #     dns_challenge_override_domain "{args[0]}.{env.CLOUDFLARE_DOMAIN}."
+      #     resolvers 1.1.1.1 1.0.0.1
+      #   }
+      #   handle {
+      #     abort
+      #   }
+      # }
+      caddy_10: "*.{env.MAIN_DOMAIN}"
+      caddy_10.import: "wildcard main"
+
+      caddy_11: "*.{env.LOCAL_DOMAIN}"
+      caddy_11.import: "wildcard local"
+
+      # Static definitions
+      # If you want to proxy a service that's running on another computer on your
+      # local network (but not on docker), this is how you do it
+      # caddy_100: "example.{env.MAIN_DOMAIN}"
+      # caddy_100.reverse_proxy: "10.0.0.25:8888"
+
+# Important to have everything on the same network
+networks:
+  caddy:
+    name: homeserver
+    external: true
