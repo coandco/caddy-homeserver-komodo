@@ -4,7 +4,7 @@ Worked example for a Caddy docker homeserver (with Cloudflare CNAMEd DNS) using 
 Installation steps:
 
 1. On your Cloudflare domain, set up a single record `*` pointing at your IP.  This should make
-   `*.cfdomain.com` point at you.
+   `*.cfdomain.com` point at you.  Make sure the domain has "proxied" set to off, as we just want raw DNS.
 2. On your main domain, set up two wildcard records, one A record for `*.local` pointing at your internal
    network IP (i.e. 192.168.0.2 or whatever), and one CNAME record for `*.main` pointing at
    `main.cfdomain.com`.
