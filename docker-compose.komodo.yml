@@ -22,6 +22,8 @@ services:
       KOMODO_OIDC_ENABLED: "false"
       KOMODO_GITHUB_OAUTH_ENABLED: "false"
       KOMODO_GOOGLE_OAUTH_ENABLED: "false"
+      KOMODO_INIT_ADMIN_USERNAME: "admin"
+      KOMODO_INIT_ADMIN_PASSWORD: "changeme"
       TZ: "America/Los_Angeles"
     volumes:
       - /volume1/docker/komodo/repo-cache:/repo-cache

@@ -13,11 +13,11 @@ Installation steps:
    `local.cfdomain.com` and `main.cfdomain.com` respectively.
 4. Run `docker compose -f docker-compose.komodo.yml up -d`.  This will bring Komodo 
    up on port 9120.  Next, visit `http://<ip_of_machine_docker_is_running_on>:9120` in your browser.
-5. Set the initial admin password for Komodo, then click `Stacks->New Stack` and name the new stack
-   "caddy".  Select your server from the "Select Server" box (should be the only one available) 
-   and choose "UI Defined" under "Choose Mode".  Paste the contents of `docker-compose.caddy.yml`
-   into the `Compose File` section.
-6. Scroll down to the "Environment" section and fill in the following variables (replacing the values
+5. Log into your Komodo instance with admin/changeme, then change the admin password.
+6. Click `Stacks->New Stack` and name the new stack "caddy".  Select your server from the 
+   "Select Server" box (should be the only one available) and choose "UI Defined" under "Choose Mode".  
+   Paste the contents of `docker-compose.caddy.yml` into the `Compose File` section.
+7. Scroll down to the "Environment" section and fill in the following variables (replacing the values
    with your own information):
    ```
    EMAIL=your_email
@@ -26,8 +26,8 @@ Installation steps:
    CLOUDFLARE_DOMAIN=cloudflare_domain
    CLOUDFLARE_API_KEY=cloudflare_api_key
    ```
-7. Hit the "Save" button in the lower-left corner, confirm in the dialog, then scroll to the top and hit
+8. Hit the "Save" button in the lower-left corner, confirm in the dialog, then scroll to the top and hit
    the "Deploy" button above the config to start Caddy.
-6. See if you can access Komodo through Caddy via https://komodo.$LOCAL_DOMAIN (from the env
+9. See if you can access Komodo through Caddy via https://komodo.$LOCAL_DOMAIN (from the env
    vars you filled out in step 6).
-7. If it works, try adding another stack using the template found in `docker-compose.example-service.yml`.
+10. If it works, try adding another stack using the template found in `docker-compose.example-service.yml`.
